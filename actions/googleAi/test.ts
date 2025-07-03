@@ -1,39 +1,33 @@
-import { Chat } from "@google/genai";
-
 export async function sendMessage({
   message,
-  chat,
+  chatId,
 }: {
   message: string;
-  chat: Chat;
+  chatId: number;
 }) {
-  const response = await chat.sendMessage({
-    message: message,
-  });
+  const response = await fetch(
+    "http://localhost:4040/api/gemini/chat-send",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message,
+        chatId,
+      }),
+    }
+  );
 
-  console.log("Response from Google AI:", response);
-  console.log("Cached tokens", response.usageMetadata?.cachedContentTokenCount);
-
-  if (!response) {
-    return {
-      successs: false,
-      content: "No response from Google AI",
-    };
+  if (!response.ok) {
+    console.error("Failed to send message:", response.statusText);
   }
 
-  const messageResponse = response?.candidates[0]?.content?.parts[0]?.text;
-  const tokens = response.usageMetadata?.totalTokenCount;
-  const normalToken = response.usageMetadata?.toolUsePromptTokenCount;
-
-  const cachedTokens = response.usageMetadata?.cacheTokensDetails;
-
-  console.log(
-    `Normal tokens: ${normalToken}, Total tokens: ${tokens}, Cached tokens: ${response.usageMetadata?.cachedContentTokenCount}`
-  );
-  console.log(JSON.stringify(response, null, 2), "Response from Google AI");
+  const data = await response.json();
 
   return {
-    messageResponse,
-    tokens,
+    messageResponse: data.message,
+    tokens: data.tokens,
+    cachedTokens: data.cachedTokens,
   };
 }

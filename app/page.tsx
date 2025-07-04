@@ -1,83 +1,125 @@
 "use client";
-
-import { googleAiActions } from "@/actions/googleAi";
-import { Chat } from "@google/genai";
-import { useEffect, useState } from "react";
+import { useCreateChat } from "@/hooks/useCreateChat";
+import { useStreamingChat } from "@/hooks/useStreamingMessage";
+import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [tokenUsed, setTokenUsed] = useState<number | undefined>();
-  const [data, setData] = useState({});
+  const { createChat } = useCreateChat();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [inputMessage, setInputMessage] = useState("");
 
+  const {
+    messages,
+    currentResponse,
+    isStreaming,
+    streamMessage,
+    tokenUsed,
+    isAITyping,
 
-  const handleSendMessage = async () => {
-    const response = await googleAiActions.sendMessage({
-      message,
-      chatId: 1,
-    });
-    setData(response.messageResponse);
-    setTokenUsed(response.tokens);
-    console.log("Response from Google AI:", response);
-    setLoading(false);
+    isOtherUserTyping,
+    handleUserTyping,
+  } = useStreamingChat({ chatId });
+
+  const handleSend = () => {
+    if (inputMessage.trim() && !isStreaming) {
+      streamMessage(inputMessage);
+      setInputMessage("");
+    }
   };
 
-
-
-  const createChat = async () => {
-    const chat = await googleAiActions.createChat();
-    console.log("Chat created:", chat);
+  const handleCreateChat = async () => {
+    const result = await createChat();
+    if (result.success) {
+      setChatId(result.chatId);
+    }
   };
 
-  // const getHistory = async () => {
-  //   const history = await googleAiActions.getHistory(currentChat as Chat);
-
-  //   localStorage.setItem("chatHistory", JSON.stringify(history.history));
-  // };
+  const joinChat = () => {
+    setChatId("1");
+  };
 
   useEffect(() => {
-    console.log("Data from Google AI:", data);
-  }, [data]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, currentResponse]);
 
   return (
-    <main className="p-24 flex flex-col itmes-center justify-center">
-      <h1 className="text-4xl font-bold mb-8">Developer Assistant</h1>
-      <div className="flex flex-col">
-        <textarea
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className="bg-slate-100 border-pink-200 border-2 w-[300px] min-h-[300px]"
-        ></textarea>
-        <button
-          onClick={handleSendMessage}
-          disabled={loading}
-          className="p-2 bg-pink-300 mt-4 hover:bg-pink-500 transition-colors rounded-md w-[200px] cursor-pointer"
-        >
-          {loading ? "Loading..." : "Send Message"}
-        </button>
+    <div className="flex flex-col h-screen max-w-2xl mx-auto p-4">
+      <div className="flex-1 overflow-y-scroll mb-4 space-y-2 scrollbar-hide">
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`p-3 rounded-lg ${
+              msg.role === "user"
+                ? "bg-theme-pink text-white ml-auto max-w-xs"
+                : "bg-theme-lgray shadow-md text-gray-200 mr-auto max-w-lg"
+            }`}
+          >
+            {msg.content}
+          </div>
+        ))}
 
-        <button
-          onClick={createChat}
-          className="p-2 bg-pink-300 mt-4 hover:bg-pink-500 transition-colors rounded-md w-[200px] cursor-pointer"
-        >
-          Create Chat
-        </button>
+        {isAITyping && !currentResponse && (
+          <div className="bg-theme-lgray text-gray-200 mr-auto max-w-lg p-3 rounded-lg">
+            AI is typing...
+            <span className="animate-pulse">▋</span>
+          </div>
+        )}
+        {isOtherUserTyping && !isAITyping && (
+          <div className="bg-theme-lgray text-gray-200 mr-auto max-w-lg p-3 rounded-lg">
+            Someone is typing...
+            <span className="animate-pulse">▋</span>
+          </div>
+        )}
 
-        {/* <button
-          onClick={getHistory}
-          className="p-2 bg-pink-300 mt-4 hover:bg-pink-500 transition-colors rounded-md w-[200px] cursor-pointer"
-        >
-          get history
-        </button> */}
-
-       
-
-        <div className="mt-2 text-sm text-gray-500">
-          Tokens used: {tokenUsed}
-        </div>
+        {currentResponse && (
+          <div className="bg-theme-lgray text-gray-200 mr-auto max-w-lg p-3 rounded-lg">
+            {currentResponse}
+            <span className="animate-pulse">▋</span>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
       </div>
 
-      <div>{JSON.stringify(data, null, 2)}</div>
-    </main>
+      <div className="flex gap-2">
+        <div className="text-gray-200">Context: {tokenUsed} / 1000000</div>
+        <input
+          type="text"
+          value={inputMessage}
+          onChange={(e) => {
+            setInputMessage(e.target.value);
+
+            handleUserTyping();
+          }}
+          onKeyPress={(e) => e.key === "Enter" && handleSend()}
+          placeholder="Type your message..."
+          disabled={isStreaming}
+          className="flex-1 p-2 border border-pink-300 rounded-lg bg-theme-lgray text-gray-200 focus:outline-none focus:ring-2 focus:ring-theme-pink"
+        />
+        <button
+          onClick={handleSend}
+          disabled={isStreaming || !inputMessage.trim()}
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+        >
+          {isStreaming ? "⏳" : "📤"}
+        </button>
+        {!chatId && (
+          <>
+            <button
+              onClick={handleCreateChat}
+              className="px-4 py-2 bg-theme-pink hover:cursor-pointer text-white rounded-lg "
+            >
+              Create Chat
+            </button>
+            <button
+              onClick={joinChat}
+              className="px-4 py-2 bg-theme-pink hover:cursor-pointer text-white rounded-lg "
+            >
+              Join Chat
+            </button>
+          </>
+        )}
+      </div>
+    </div>
   );
 }

@@ -1,3 +1,4 @@
+import { NavigationProgress } from "@/components/ui/navigation-progress";
 import Sidebar from "./components/Sidebar";
 
 export default function MainLayout({
@@ -7,6 +8,7 @@ export default function MainLayout({
 }>) {
   return (
     <>
+      <NavigationProgress/>
       <Sidebar />
       <main className="ml-44 pt-14 px-10">{children}</main>
     </>

@@ -5,6 +5,7 @@ import { ConvexClientProvider } from "../providers/ConvexClientProvider";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/providers/ReactQueryProvider";
 
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

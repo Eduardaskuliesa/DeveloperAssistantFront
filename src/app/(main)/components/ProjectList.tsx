@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "../../../../convex/_generated/api";
+import { ProgressLink } from "@/components/links/ProgressButton";
 
 const ProjectButton = ({ name }: { name: string }) => {
   return (
@@ -13,7 +14,7 @@ const ProjectButton = ({ name }: { name: string }) => {
 };
 
 const ProjectSkeleton = () => (
-  <div className="flex items-center px-2 h-9 bg-theme-gray rounded animate-pulse">
+  <div className="flex items-center px-2 h-9 bg-theme-gray rounded-md animate-pulse">
     <div className="h-3 bg-theme-xlgray rounded-sm animate-pulse w-full"></div>
   </div>
 );
@@ -34,7 +35,9 @@ const ProjectsList = () => {
         </>
       ) : (
         projects?.map((project) => (
-          <ProjectButton key={project._id} name={project.name} />
+          <ProgressLink key={project._id} href={`/project/${project._id}`}>
+            <ProjectButton name={project.name} />
+          </ProgressLink>
         ))
       )}
     </div>

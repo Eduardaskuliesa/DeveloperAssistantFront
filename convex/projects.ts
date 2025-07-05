@@ -10,7 +10,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    
+
     return await ctx.db.insert("projects", {
       ...args,
       createdAt: now,
@@ -33,5 +33,12 @@ export const list = query({
       .query("projects")
       .withIndex("by_team", (q) => q.eq("teamId", args.teamId))
       .collect();
+  },
+});
+
+export const getById = query({
+  args: { id: v.id("projects") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id);
   },
 });

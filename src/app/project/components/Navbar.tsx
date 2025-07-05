@@ -1,11 +1,10 @@
 "use client";
-import { ChevronsUpDown, Search } from "lucide-react";
+import { ChevronLeft, ChevronsUpDown, Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Popover,
   PopoverContent,
@@ -13,6 +12,7 @@ import {
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import CreateProjectButton from "./CreateProjectButton";
+import { ProgressLink } from "@/components/links/ProgressButton";
 
 interface NavbarProps {
   projectId: string;
@@ -21,7 +21,6 @@ interface NavbarProps {
 const Navbar = ({ projectId }: NavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const router = useRouter();
 
   const { data: project, isPending } = useQuery(
     convexQuery(api.projects.getById, { id: projectId as Id<"projects"> })
@@ -35,15 +34,20 @@ const Navbar = ({ projectId }: NavbarProps) => {
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleProjectSelect = (id: string) => {
-    router.push(`/project/${id}`);
+  const handleClosePopover = () => {
     setIsOpen(false);
     setSearchTerm("");
   };
 
   return (
-    <div className="ml-38 pt-5 mx-4 pb-2">
-      <Popover  open={isOpen} onOpenChange={setIsOpen}>
+    <div className="ml-38 pt-5 mx-4 pb-2 flex items-center gap-2">
+      <ProgressLink
+        href="/dashboard"
+        className="text-sm bg-theme-gray hover:bg-theme-lgray p-1 rounded-full inline-block"
+      >
+        <ChevronLeft className="text-theme-xlgray" />
+      </ProgressLink>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <div className="text-neutral-300 hover:bg-theme-gray transition-colors cursor-pointer text-xl font-semibold flex items-center gap-2 rounded-full px-4 h-10 w-fit">
             {isPending ? (
@@ -68,20 +72,21 @@ const Navbar = ({ projectId }: NavbarProps) => {
             <div className="space-y-1 px-1 max-h-60 overflow-y-auto overflow-x-visible scrollbar-hide">
               <div className="text-xs text-neutral-400 px-2 py-1">Projects</div>
               {filteredProjects?.map((proj) => (
-                <button
+                <ProgressLink
                   key={proj._id}
-                  onClick={() => handleProjectSelect(proj._id)}
-                  className={`w-full overflow-visible text-left font-semibold px-3 cursor-pointer hover:scale-[1.02] py-2 rounded-md text-sm hover:bg-theme-gray transition-colors ${
+                  href={`/project/${proj._id}`}
+                  onClick={handleClosePopover}
+                  className={`w-full overflow-visible text-left font-semibold px-3 cursor-pointer hover:scale-[1.02] py-2 rounded-md text-sm hover:bg-theme-gray transition-colors block ${
                     proj._id === projectId
                       ? "bg-theme-gray text-theme-pink"
                       : "text-neutral-300"
                   }`}
                 >
                   {proj.name}
-                </button>
+                </ProgressLink>
               ))}
               <div className="border-neutral-600 border-b"></div>
-              <CreateProjectButton></CreateProjectButton>
+              <CreateProjectButton />
             </div>
           </div>
         </PopoverContent>

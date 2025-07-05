@@ -152,13 +152,16 @@
 }
 
 #nprogress .bar {
-  background: #db5693 !important; 
+  background: #db5693 !important;
   position: fixed !important;
   z-index: 9999 !important;
   top: 0 !important;
   left: 0 !important;
   width: 100% !important;
   height: 3px !important;
+  box-shadow:
+    0 2px 8px rgba(219, 86, 147, 0.3),
+    0 1px 4px rgba(219, 86, 147, 0.2) !important;
 }
 
 #nprogress .peg {
@@ -167,8 +170,9 @@
   right: 0px !important;
   width: 100px !important;
   height: 100% !important;
-  box-shadow: 0 0 10px #db5693, 0 0 5px #db5693 !important;
-  opacity: 1.0 !important;
+  box-shadow:
+    0 0 15px #db5693,
+    0 0 8px #db5693 !important;
+  opacity: 1 !important;
   transform: rotate(3deg) translate(0px, -4px) !important;
 }
-

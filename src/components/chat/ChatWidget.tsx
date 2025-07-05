@@ -59,6 +59,7 @@ export function ChatWidget() {
             setIsOpen={setIsOpen}
           />
           <ChatInterface
+            chats={chats as Doc<"chats">[]}
             projectId={projectId}
             chatId={activeChatId}
             onChatCreated={setActiveChatId}

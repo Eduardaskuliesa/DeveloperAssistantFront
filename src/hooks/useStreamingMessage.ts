@@ -2,14 +2,19 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { io, Socket } from "socket.io-client";
+import { Id } from "../../convex/_generated/dataModel";
 
 export interface UseStreamingChatProps {
   chatId: string | null;
+  projectId: string;
 }
 
 const userId = Math.random().toString(26).substring(7);
 
-export const useStreamingChat = ({ chatId }: UseStreamingChatProps) => {
+export const useStreamingChat = ({
+  chatId,
+  projectId,
+}: UseStreamingChatProps) => {
   const [isAITyping, setIsAITyping] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isOtherUserTyping, setOtherUserTyping] = useState(false);
@@ -81,7 +86,7 @@ export const useStreamingChat = ({ chatId }: UseStreamingChatProps) => {
     chatId ? { chatId } : "skip"
   );
   const addMessage = useMutation(api.chats.addMessage);
-
+  const updateTokenCount = useMutation(api.chats.updateTokenCount);
   const [currentResponse, setCurrentResponse] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [tokenUsed, setTokenUsed] = useState<number | undefined>();
@@ -97,7 +102,7 @@ export const useStreamingChat = ({ chatId }: UseStreamingChatProps) => {
 
     await addMessage({
       chatId,
-      projectId: "project1",
+      projectId: projectId,
       teamId: "team1",
       content: message,
       role: "user",
@@ -117,7 +122,7 @@ export const useStreamingChat = ({ chatId }: UseStreamingChatProps) => {
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let fullResponse = "";
-
+      let tokens;
       while (true) {
         const result = await reader?.read();
         if (!result) break;
@@ -137,7 +142,7 @@ export const useStreamingChat = ({ chatId }: UseStreamingChatProps) => {
           }
 
           if (metadataPart) {
-            const tokens = JSON.parse(metadataPart).tokens;
+            tokens = JSON.parse(metadataPart).tokens;
             setTokenUsed(tokens);
           }
         } else {
@@ -146,14 +151,20 @@ export const useStreamingChat = ({ chatId }: UseStreamingChatProps) => {
         }
       }
 
+      await updateTokenCount({
+        chatId: chatId as Id<"chats">,
+        totalTokenUsed: tokens as number,
+      });
+
       await addMessage({
         chatId,
-        projectId: "project1",
+        projectId: projectId,
         teamId: "team1",
         content: fullResponse,
         role: "assistant",
         userId: "system",
       });
+
       setCurrentResponse("");
     } catch (error) {
       console.error("Error sending message:", error);

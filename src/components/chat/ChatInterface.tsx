@@ -4,10 +4,12 @@ import { useStreamingChat } from "@/hooks/useStreamingMessage";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import ChatInterfaceInputs from "./ChatInerfaceInputs";
+import { Doc } from "../../../convex/_generated/dataModel";
 
 interface ChatInterfaceProps {
   chatId: string | null;
   onChatCreated?: (chatId: string) => void;
+  chats: Doc<"chats">[];
   projectId: string;
 }
 
@@ -22,9 +24,16 @@ const TypingIndicator = () => (
   </div>
 );
 
-export function ChatInterface({ chatId }: ChatInterfaceProps) {
+export function ChatInterface({
+  chatId,
+  projectId,
+  chats,
+}: ChatInterfaceProps) {
   const [activeChatId, setActiveChatId] = useState<string | null>(chatId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const currentChat = chats?.find((chat) => chat.chatId === chatId);
+  const tokens = currentChat?.totalTokensUsed || 0
 
   useEffect(() => {
     setActiveChatId(chatId);
@@ -35,11 +44,10 @@ export function ChatInterface({ chatId }: ChatInterfaceProps) {
     currentResponse,
     isStreaming,
     streamMessage,
-    tokenUsed,
     isAITyping,
     isOtherUserTyping,
     handleUserTyping,
-  } = useStreamingChat({ chatId: activeChatId });
+  } = useStreamingChat({ chatId: activeChatId, projectId: projectId });
 
   const handleSendMessage = (message: string) => {
     streamMessage(message);
@@ -174,7 +182,7 @@ export function ChatInterface({ chatId }: ChatInterfaceProps) {
         chatId={activeChatId}
         onSendMessage={handleSendMessage}
         isStreaming={isStreaming}
-        tokenUsed={tokenUsed}
+        tokenUsed={tokens}
         onUserTyping={handleUserTyping}
       />
     </div>

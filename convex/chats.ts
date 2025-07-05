@@ -74,3 +74,20 @@ export const updateTitle = mutation({
     });
   },
 });
+
+export const updateTokenCount = mutation({
+  args: {
+    chatId: v.string(),
+    totalTokenUsed: v.number(),
+  },
+  handler: async (ctx, { chatId, totalTokenUsed }) => {
+    const chat = await ctx.db
+      .query("chats")
+      .withIndex("by_chat_id", (q) => q.eq("chatId", chatId))
+      .first();
+    if (!chat) throw new Error("Chat not found");
+    await ctx.db.patch(chat._id, {
+      totalTokensUsed: totalTokenUsed,
+    });
+  },
+});

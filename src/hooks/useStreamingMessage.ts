@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
-import { api } from "@/convex/_generated/api";
+import { api } from "../../convex/_generated/api";
 import { io, Socket } from "socket.io-client";
 
 export interface UseStreamingChatProps {

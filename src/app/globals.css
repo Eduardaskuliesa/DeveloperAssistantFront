@@ -10,6 +10,7 @@
   --color-theme-bg: #242024;
   --color-theme-gray: #2d292d;
   --color-theme-lgray: #363136;
+  --color-theme-xlgray: #928f94;
   --color-theme-pink: #db5693;
   --shadow-theme-sm:
     -1px -2px 12px 1px rgb(28 24 28 / 25%),
@@ -133,7 +134,7 @@
 }
 
 .scrollbar-hide {
-  -ms-overflow-style: none; 
+  -ms-overflow-style: none;
   scrollbar-width: none;
 }
 

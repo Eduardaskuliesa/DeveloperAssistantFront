@@ -28,4 +28,16 @@ export default defineSchema({
     .index("by_chat", ["chatId"])
     .index("by_project", ["projectId"])
     .index("by_team", ["teamId"]),
+
+  projects: defineTable({
+    name: v.string(),
+    description: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    userId: v.string(),
+    teamId: v.string(),
+  })
+    .index("by_team", ["teamId"])
+    .index("by_user", ["userId"])
+    .index("by_team_user", ["teamId", "userId"]),
 });

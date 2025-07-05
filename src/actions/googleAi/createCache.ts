@@ -1,4 +1,4 @@
-import googleAi from "@/services/google-ai";
+import googleAi from "@/src/services/google-ai";
 
 export async function createCache() {
   const systemInstruction = {

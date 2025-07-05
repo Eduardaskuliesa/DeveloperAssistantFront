@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ConvexClientProvider } from "@/providers/ConvexClientProvider";
+import { ConvexClientProvider } from "../providers/ConvexClientProvider";
+import { Toaster } from "sonner";
+import { QueryProvider } from "@/providers/ReactQueryProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +30,23 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-theme-bg`}
       >
-        <ConvexClientProvider>{children}</ConvexClientProvider>
+        <ConvexClientProvider>
+          <QueryProvider>
+            {children}
+            <Toaster
+              theme="dark"
+              position="top-right"
+              richColors
+              toastOptions={{
+                style: {
+                  background: "#363136",
+                  border: "1px solid #4a4a4a",
+                  color: "#e5e5e5",
+                },
+              }}
+            />
+          </QueryProvider>
+        </ConvexClientProvider>
       </body>
     </html>
   );

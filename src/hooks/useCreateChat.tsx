@@ -1,10 +1,11 @@
 "use client";
-import { api } from "../../convex/_generated/api"
+import { api } from "../../convex/_generated/api";
 import { useMutation } from "convex/react";
 
-export const useCreateChat = () => {
+export const useCreateChat = ({ projectId }: { projectId: string }) => {
+  console.log("Create chat fired with projectId:", projectId);
   const createChatMutation = useMutation(api.chats.createChat);
-  
+
   const createChat = async () => {
     const response = await fetch(
       "http://localhost:4040/api/gemini/chat-create",
@@ -13,6 +14,9 @@ export const useCreateChat = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          projectId: projectId,
+        }),
       }
     );
 
@@ -25,7 +29,7 @@ export const useCreateChat = () => {
 
     await createChatMutation({
       chatId: data.chatId,
-      projectId: "project1",
+      projectId: projectId,
       teamId: "team1",
       createdBy: "user1",
     });

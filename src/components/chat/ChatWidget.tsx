@@ -3,11 +3,29 @@ import { useState } from "react";
 import { ChatButton } from "./ChatButton";
 import { ConversationList } from "./ConversationList";
 import { ChatInterface } from "./ChatInterface";
-import { ChevronLeft, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import ChatInterfaceHeader from "./ChatInterfaceHeader";
+import { api } from "../../../convex/_generated/api";
+import { Doc, Id } from "../../../convex/_generated/dataModel";
+import { useQuery } from "@tanstack/react-query";
+import { convexQuery } from "@convex-dev/react-query";
 
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
+
+  const pathname = usePathname();
+  const projectId = pathname.split("/project/")[1]?.split("/")[0];
+
+  const {
+    data: chats,
+    isPending,
+    error,
+  } = useQuery(
+    convexQuery(api.chats.getRecentChats, {
+      projectId: projectId as Id<"projects">,
+    })
+  );
 
   const handleSelectConversation = (chatId: string) => {
     setActiveChatId(chatId);
@@ -26,28 +44,22 @@ export function ChatWidget() {
     setActiveChatId(null);
   };
 
+
+
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {!isOpen ? (
         <ChatButton onClick={() => setIsOpen(true)} />
       ) : activeChatId ? (
         <div className="bg-theme-bg border fixed bottom-0 right-0 border-neutral-700 shadow-xl w-132 h-[90vh] flex flex-col">
-          <div className="p-2 border-b border-neutral-700 flex items-center justify-between">
-            <button
-              onClick={handleBackToList}
-              className="text-neutral-400 hover:text-neutral-300 bg-theme-gray rounded-full p-1 hover:bg-theme-lgray cursor-pointer text-sm"
-            >
-              <ChevronLeft></ChevronLeft>
-            </button>
-            <h3 className="text-neutral-300 font-semibold">Chat</h3>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-neutral-400 hover:text-neutral-300 bg-theme-gray hover:bg-theme-lgray transition-colors cursor-pointer rounded-full p-2"
-            >
-              <X className="w-5 h-5"></X>
-            </button>
-          </div>
+          <ChatInterfaceHeader
+            chatId={activeChatId}
+            chats={chats as Doc<"chats">[]}
+            handleBackToList={handleBackToList}
+            setIsOpen={setIsOpen}
+          />
           <ChatInterface
+            projectId={projectId}
             chatId={activeChatId}
             onChatCreated={setActiveChatId}
           />
@@ -57,6 +69,9 @@ export function ChatWidget() {
           onClose={handleClose}
           onSelectConversation={handleSelectConversation}
           onNewChat={handleNewChat}
+          chats={chats as Doc<"chats">[]}
+          isPending={isPending}
+          error={error}
         />
       )}
     </div>

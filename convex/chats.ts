@@ -17,6 +17,19 @@ export const createChat = mutation({
   },
 });
 
+export const getRecentChats = query({
+  args: {
+    projectId: v.id("projects"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("chats")
+      .filter((q) => q.eq(q.field("projectId"), args.projectId))
+      .order("desc")
+      .take(5);
+  },
+});
+
 export const addMessage = mutation({
   args: {
     chatId: v.string(),
@@ -42,5 +55,22 @@ export const getNewMessages = query({
       .query("messages")
       .withIndex("by_chat", (q) => q.eq("chatId", chatId))
       .collect();
+  },
+});
+
+export const updateTitle = mutation({
+  args: {
+    chatId: v.string(),
+    title: v.string(),
+  },
+  handler: async (ctx, { chatId, title }) => {
+    const chat = await ctx.db
+      .query("chats")
+      .withIndex("by_chat_id", (q) => q.eq("chatId", chatId))
+      .first();
+    if (!chat) throw new Error("Chat not found");
+    await ctx.db.patch(chat._id, {
+      title: title,
+    });
   },
 });

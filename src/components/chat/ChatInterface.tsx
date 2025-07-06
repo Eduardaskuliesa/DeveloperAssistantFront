@@ -150,8 +150,8 @@ export function ChatInterface({
             <div className="text-xs text-gray-400 mb-1 px-1 text-left">
               AI Assistant
             </div>
-            <div className="w-[90%] p-3 rounded-lg text-sm bg-theme-lgray text-gray-200 rounded-bl-none">
-              <div className="markdown-content flex">
+            <div className="w-[90%] px-3 py-2 rounded-lg text-sm bg-theme-lgray text-gray-200 rounded-bl-none">
+              <div className="markdown-content flex items-center flex-col">
                 <ReactMarkdown components={markdownComponents}>
                   {currentResponse}
                 </ReactMarkdown>

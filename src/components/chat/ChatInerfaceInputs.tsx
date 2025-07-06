@@ -31,8 +31,8 @@ const ChatInterfaceInputs = ({
       className="p-2 min-h-[180px]
     "
     >
-      <div className="bg-theme-gray relative scrollbar-hide border  border-neutral-700 rounded-lg w-full p-3">
-        <div className=" scrollbar-hide">
+      <div className="bg-theme-gray max-h-[120px]   relative scrollbar-hide border  border-neutral-700 rounded-lg w-full p-3">
+        <div className="scrollbar-hide">
           <textarea
             value={inputMessage}
             onChange={(e) => {
@@ -48,14 +48,13 @@ const ChatInterfaceInputs = ({
               }
             }}
             placeholder="Ask about your architecture..."
-            className="w-full scrollbar-hide py-2 bg-transparent border-none text-neutral-200 text-sm placeholder-neutral-400 focus:outline-none resize-none min-h-[36px] max-h-[100px]"
-            style={{ height: "auto" }}
+            className="w-full scrollbar-hide pt-2 bg-transparent border-none text-neutral-200 text-sm placeholder-neutral-400 focus:outline-none resize-none min-h-[65px] max-h-[65px]"
           />
         </div>
-        <span className="absolute right-4 top-4 text-xs text-neutral-400">
+        <span className="absolute right-4 top-1 text-xs text-neutral-400">
           {tokenUsed?.toLocaleString()} / 1M
         </span>
-        <div className="flex items-center justify-between mt-2 text-xs text-neutral-500">
+        <div className="flex items-center justify-between  text-xs text-neutral-500">
           <span>Press Enter to send, Shift+Enter for new line</span>
           <button
             onClick={handleSend}

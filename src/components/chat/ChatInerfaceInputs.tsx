@@ -27,9 +27,12 @@ const ChatInterfaceInputs = ({
   };
 
   return (
-    <div className="p-2 absolute bottom-0 flex items-end w-full">
-      <div className="bg-theme-gray scrollbar-hide border border-neutral-700 rounded-lg w-full p-3">
-        <div className="relative scrollbar-hide">
+    <div
+      className="p-2 min-h-[180px]
+    "
+    >
+      <div className="bg-theme-gray relative scrollbar-hide border  border-neutral-700 rounded-lg w-full p-3">
+        <div className=" scrollbar-hide">
           <textarea
             value={inputMessage}
             onChange={(e) => {
@@ -45,12 +48,11 @@ const ChatInterfaceInputs = ({
               }
             }}
             placeholder="Ask about your architecture..."
-            disabled={isStreaming}
             className="w-full scrollbar-hide py-2 bg-transparent border-none text-neutral-200 text-sm placeholder-neutral-400 focus:outline-none resize-none min-h-[36px] max-h-[100px]"
             style={{ height: "auto" }}
           />
         </div>
-        <span className="absolute right-6 top-4 text-xs text-neutral-400">
+        <span className="absolute right-4 top-4 text-xs text-neutral-400">
           {tokenUsed?.toLocaleString()} / 1M
         </span>
         <div className="flex items-center justify-between mt-2 text-xs text-neutral-500">

@@ -48,13 +48,31 @@ export const addMessage = mutation({
   },
 });
 
-export const getNewMessages = query({
+export const getInitialMessages = query({
   args: { chatId: v.string() },
   handler: async (ctx, { chatId }) => {
-    return await ctx.db
+    const messages = await ctx.db
       .query("messages")
       .withIndex("by_chat", (q) => q.eq("chatId", chatId))
+      .order("asc")
       .collect();
+
+    console.log(`Initial load: Found ${messages.length} messages`);
+    return messages;
+  },
+});
+
+export const getLatest5Messages = query({
+  args: { chatId: v.string() },
+  handler: async (ctx, { chatId }) => {
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_chat", (q) => q.eq("chatId", chatId))
+      .order("desc")
+      .take(2);
+    console.log(`Latest 2 messages: Found ${messages.length} messages`);
+
+    return messages.reverse();
   },
 });
 

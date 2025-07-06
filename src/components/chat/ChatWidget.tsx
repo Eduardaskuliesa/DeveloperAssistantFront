@@ -51,7 +51,7 @@ export function ChatWidget() {
       {!isOpen ? (
         <ChatButton onClick={() => setIsOpen(true)} />
       ) : activeChatId ? (
-        <div className="bg-theme-bg border fixed bottom-0 right-0 border-neutral-700 shadow-xl w-132 h-[90vh] flex flex-col">
+        <div className="bg-theme-bg border fixed bottom-0 right-0 border-neutral-700 shadow-xl w-132 h-[90%]">
           <ChatInterfaceHeader
             chatId={activeChatId}
             chats={chats as Doc<"chats">[]}

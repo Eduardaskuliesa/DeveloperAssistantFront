@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { io, Socket } from "socket.io-client";
-import { Id } from "../../convex/_generated/dataModel";
+import { Doc, Id } from "../../convex/_generated/dataModel";
 
 export interface UseStreamingChatProps {
   chatId: string | null;
@@ -22,6 +22,44 @@ export const useStreamingChat = ({
     null
   );
   const [isTyping, setIsTyping] = useState(false);
+
+  const [allMessages, setAllMessages] = useState<Doc<"messages">[]>([]);
+  const [initialLoaded, setInitialLoaded] = useState(false);
+
+  const initialMessages = useQuery(
+    api.chats.getInitialMessages,
+    initialLoaded ? "skip" : { chatId: chatId as string }
+  );
+
+  const latest5Messages = useQuery(
+    api.chats.getLatest5Messages,
+    !initialLoaded ? "skip" : { chatId: chatId as string }
+  );
+
+  const addMessage = useMutation(api.chats.addMessage);
+  const updateTokenCount = useMutation(api.chats.updateTokenCount);
+
+  const [currentResponse, setCurrentResponse] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [tokenUsed, setTokenUsed] = useState<number | undefined>();
+
+  useEffect(() => {
+    if (initialMessages && !initialLoaded) {
+      setAllMessages(initialMessages);
+      setInitialLoaded(true);
+    }
+  }, [initialMessages, initialLoaded]);
+
+  useEffect(() => {
+    if (latest5Messages && latest5Messages.length > 0 && initialLoaded) {
+      setAllMessages((prev) => {
+        const newMessages = latest5Messages.filter(
+          (msg) => !prev.some((existing) => existing._id === msg._id)
+        );
+        return newMessages.length > 0 ? [...prev, ...newMessages] : prev;
+      });
+    }
+  }, [latest5Messages, initialLoaded]);
 
   const handleUserTyping = () => {
     if (!socket || !socket.connected) return;
@@ -43,7 +81,7 @@ export const useStreamingChat = ({
       }
       setIsTyping(false);
       setTypingTimeout(null);
-    }, 1500);
+    }, 500);
 
     setTypingTimeout(timeout);
   };
@@ -60,11 +98,12 @@ export const useStreamingChat = ({
     if (!chatId) return;
 
     const newSocket = io("http://localhost:4040");
-
     newSocket.emit("join-chat", { chatId, userId });
 
     newSocket.on("typing", ({ isAITyping }) => {
       setIsAITyping(isAITyping);
+      setOtherUserTyping(false);
+      setTypingTimeout(null);
     });
 
     newSocket.on("user-typing", ({ isUserTyping, userId }) => {
@@ -81,35 +120,28 @@ export const useStreamingChat = ({
     };
   }, [chatId]);
 
-  const convexMessages = useQuery(
-    api.chats.getNewMessages,
-    chatId ? { chatId } : "skip"
-  );
-  const addMessage = useMutation(api.chats.addMessage);
-  const updateTokenCount = useMutation(api.chats.updateTokenCount);
-  const [currentResponse, setCurrentResponse] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [tokenUsed, setTokenUsed] = useState<number | undefined>();
-
   const streamMessage = async (message: string) => {
     if (!chatId) {
       console.error("Cannot send message: chatId is null");
       return;
     }
+
     setIsStreaming(true);
     socket?.emit("typing", { chatId, isAITyping: true });
     setCurrentResponse("");
 
-    await addMessage({
-      chatId,
-      projectId: projectId,
-      teamId: "team1",
-      content: message,
-      role: "user",
-      userId: "user1",
-    });
-
     try {
+      // 1. Add user message to database
+      await addMessage({
+        chatId,
+        projectId: projectId,
+        teamId: "team1",
+        content: message,
+        role: "user",
+        userId: "user1",
+      });
+
+      // 2. Stream AI response
       const response = await fetch(
         "http://localhost:4040/api/gemini/chat-send",
         {
@@ -123,6 +155,7 @@ export const useStreamingChat = ({
       const decoder = new TextDecoder();
       let fullResponse = "";
       let tokens;
+
       while (true) {
         const result = await reader?.read();
         if (!result) break;
@@ -151,11 +184,7 @@ export const useStreamingChat = ({
         }
       }
 
-      await updateTokenCount({
-        chatId: chatId as Id<"chats">,
-        totalTokenUsed: tokens as number,
-      });
-
+      // 3. Save AI response
       await addMessage({
         chatId,
         projectId: projectId,
@@ -163,6 +192,12 @@ export const useStreamingChat = ({
         content: fullResponse,
         role: "assistant",
         userId: "system",
+      });
+
+      // 4. Update token count
+      await updateTokenCount({
+        chatId: chatId as Id<"chats">,
+        totalTokenUsed: tokens as number,
       });
 
       setCurrentResponse("");
@@ -175,7 +210,7 @@ export const useStreamingChat = ({
   };
 
   return {
-    messages: convexMessages || [],
+    messages: allMessages,
     currentResponse,
     isStreaming,
     tokenUsed,

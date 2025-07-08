@@ -176,3 +176,6 @@
   opacity: 1 !important;
   transform: rotate(3deg) translate(0px, -4px) !important;
 }
+
+.react-flow__panel.left {
+}

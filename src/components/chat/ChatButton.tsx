@@ -21,7 +21,7 @@ export function ChatButton({ onClick }: ChatButtonProps) {
   return (
     <button
       onClick={onClick}
-      className="bg-theme-gray border border-neutral-700 hover:border-theme-pink text-neutral-300 rounded-lg px-6 py-4 shadow-lg hover:scale-[1.01] transition-all min-w-[280px]"
+      className="bg-theme-gray border  border-neutral-700 hover:border-theme-pink text-neutral-300 rounded-lg px-6 py-4 shadow-lg hover:scale-[1.01] transition-all min-w-[280px]"
     >
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">

@@ -18,9 +18,9 @@ export default async function ProjectLayout({
       <Sidebar projectId={projectId} />
       <div className="flex flex-col">
         <Navbar projectId={projectId} />
-        <main className="ml-44 pt-14 px-10">{children}</main>
+        <main className="ml-44 px-4 max-h-screen">{children}</main>
       </div>
-      <ChatWidget></ChatWidget>
+      <ChatWidget />
     </>
   );
 }

@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect } from "react";
 import {
   ReactFlow,
   Background,
@@ -11,149 +11,67 @@ import {
   type OnConnect,
   type Edge,
   type Node,
+  type NodeChange,
+  type Viewport,
   MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { BaseNode } from "@/components/base-node";
-import HomeNode from "./nodes/HomeNode";
-import LayerNode from "./nodes/LayerNode";
-import { Monitor, Server, Database, Cloud, Settings, Plus } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 
-const layerOptions = [
-  { type: "frontend", label: "Frontend", icon: Monitor },
-  { type: "backend", label: "Backend", icon: Server },
-  { type: "database", label: "Database", icon: Database },
-  { type: "infrastructure", label: "Infrastructure", icon: Cloud },
-  { type: "integration", label: "Integration", icon: Settings },
-];
-
-const CustomControls = ({
-  onCreateLayer,
-}: {
-  onCreateLayer: (layerType: string) => void;
-}) => {
-  const [open, setOpen] = useState(false);
-
-  const handleCreateLayer = (layerType: string) => {
-    onCreateLayer(layerType);
-    setOpen(false);
-  };
-
-  return (
-    <div className="absolute top-5 left-5 flex gap-2 z-10">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button className="px-3 py-2 bg-theme-bg text-neutral-300 cursor-pointer hover:bg-theme-gray hover:border-theme-pink border border-neutral-600 rounded-md transition-colors flex items-center gap-2">
-            <Plus size={16} />
-            Create Layer
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-48 p-0 bg-theme-bg border-neutral-600">
-          <div className="grid">
-            {layerOptions.map((layer) => {
-              const LayerIcon = layer.icon;
-              return (
-                <button
-                  key={layer.type}
-                  onClick={() => handleCreateLayer(layer.type)}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-theme-gray transition-colors text-left"
-                >
-                  <LayerIcon size={18} className="text-neutral-400" />
-                  <span className="text-neutral-300">{layer.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </PopoverContent>
-      </Popover>
-
-      <button className="px-3 py-2 bg-theme-bg text-neutral-300 cursor-pointer rounded-md hover:bg-theme-gray hover:border-theme-pink border border-neutral-600 transition-colors">
-        Create Node
-      </button>
-      <button className="px-3 py-2 bg-theme-bg text-neutral-300 cursor-pointer rounded-md hover:bg-theme-gray hover:border-theme-pink border border-neutral-600 transition-colors">
-        Create Textbox
-      </button>
-    </div>
-  );
-};
-
-const initialEdges: Edge[] = [
-  {
-    id: "home-layer1",
-    source: "home",
-    target: "layer1",
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-      color: "#737373",
-    },
-    style: { stroke: "#737373", strokeWidth: 2 },
-    type: "bezier",
-  },
-  {
-    id: "home-layer2",
-    source: "home",
-    target: "layer2",
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-      color: "#737373",
-    },
-    style: { stroke: "#737373", strokeWidth: 2 },
-    type: "bezier",
-  },
-];
-
-const nodeTypes = {
-  baseNode: BaseNode,
-  layerNode: LayerNode,
-  architectureNode: HomeNode,
-};
+import CustomControls from "@/components/whiteboard/controlls/RoomControlls";
+import HomeNode from "@/components/whiteboard/nodes/HomeNodes";
+import LayerNode from "@/components/whiteboard/nodes/LayerNode";
+import { useLayerStore } from "@/stores/useLayerStore";
 
 const BlueprintPage = () => {
-  const initialNodes: Node[] = [
-    {
-      id: "home",
-      type: "architectureNode",
-      position: { x: 700, y: 100 },
-      data: {
-        label: "Course Platform",
-        type: "home",
-      },
-      deletable: false,
-      draggable: true,
-    },
-    {
-      id: "layer1",
-      type: "layerNode",
-      position: { x: 100, y: 250 },
-      data: {
-        label: "Frontend Layer",
-        layerType: "frontend",
-        cabinets: [{ name: "User Interface" }, { name: "Authentication" }],
-      },
-      deletable: true,
-      draggable: true,
-    },
-    {
-      id: "layer2",
-      type: "layerNode",
-      position: { x: 450, y: 250 },
-      data: {
-        label: "Backend Layer",
-        layerType: "backend",
-        cabinets: [{ name: "API Services" }, { name: "Authentication" }],
-      },
-      deletable: true,
-      draggable: true,
-    },
-  ];
+  const nodeTypes = {
+    layerNode: LayerNode,
+    architectureNode: HomeNode,
+  };
+  const {
+    layerEdgeState,
+    layerNodeState,
+    updateLayerPosition,
+    viewport,
+    updateViewport,
+  } = useLayerStore();
+
+  const initialEdges: Edge[] = [];
+  const initialNodes: Node[] = [];
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  const handleNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      onNodesChange(changes);
+
+      changes.forEach((change) => {
+        if (
+          change.type === "position" &&
+          change.dragging === false &&
+          change.position
+        ) {
+          updateLayerPosition(change.id, change.position);
+        }
+      });
+    },
+    [onNodesChange, updateLayerPosition]
+  );
+
+  const handleViewportChange = useCallback(
+    (newViewport: Viewport) => {
+      updateViewport(newViewport);
+    },
+    [updateViewport]
+  );
+
+  useEffect(() => {
+    const newEdges = [...layerEdgeState];
+    const newNodes = [...layerNodeState];
+
+    setNodes(newNodes);
+    setEdges(newEdges);
+  }, [layerEdgeState, layerNodeState, setNodes, setEdges]);
 
   const onConnect: OnConnect = useCallback(
     (params) =>
@@ -174,46 +92,9 @@ const BlueprintPage = () => {
     [setEdges]
   );
 
-  const handleCreateLayer = useCallback(
-    (layerType: string) => {
-      const newId = `layer-${Date.now()}`;
-      const newNode: Node = {
-        id: newId,
-        type: "layerNode",
-        position: {
-          x: Math.random() * 500 + 100,
-          y: Math.random() * 300 + 250,
-        },
-        data: {
-          label: `${layerType.charAt(0).toUpperCase() + layerType.slice(1)} Layer`,
-          layerType: layerType,
-          cabinets: [],
-        },
-        deletable: true,
-        draggable: true,
-      };
-
-      const newEdge: Edge = {
-        id: `home-${newId}`,
-        source: "home",
-        target: newId,
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: "#737373",
-        },
-        style: { stroke: "#737373", strokeWidth: 2 },
-        type: "bezier",
-      };
-
-      setNodes((nds) => [...nds, newNode]);
-      setEdges((eds) => [...eds, newEdge]);
-    },
-    [setNodes, setEdges]
-  );
-
   return (
     <div className="h-[90vh] w-full relative rounded-xl bg-theme-gray">
-      <CustomControls onCreateLayer={handleCreateLayer} />
+      <CustomControls />
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -244,9 +125,11 @@ const BlueprintPage = () => {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
-        onNodesChange={onNodesChange}
+        onNodesChange={handleNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        viewport={viewport}
+        onViewportChange={handleViewportChange}
         className="w-full h-full rounded-xl bg-theme-xlgray"
         connectionLineStyle={{ stroke: "#ec4899", strokeWidth: 2 }}
         defaultEdgeOptions={{

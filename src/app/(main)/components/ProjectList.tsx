@@ -7,7 +7,7 @@ import { ProgressLink } from "@/components/links/ProgressButton";
 const ProjectButton = ({ name }: { name: string }) => {
   return (
     <button className="flex items-center hover:scale-[1.02] justify-between hover:bg-theme-gray cursor-pointer transition-colors px-2 h-9 text-sm rounded-md text-neutral-400 font-semibold">
-      <span className="text-left">{name}</span>
+      <span className="text-left truncate max-w-28">{name}</span>
       <span className=""></span>
     </button>
   );
@@ -35,7 +35,10 @@ const ProjectsList = () => {
         </>
       ) : (
         projects?.map((project) => (
-          <ProgressLink key={project._id} href={`/project/${project._id}`}>
+          <ProgressLink
+            key={project._id}
+            href={`/project/${project._id}/blueprint`}
+          >
             <ProjectButton name={project.name} />
           </ProgressLink>
         ))

@@ -21,6 +21,7 @@ export interface LayerStoreState {
   error: string | null;
   viewport: Viewport;
   projectId: string | null;
+  projectName: string | null;
 }
 
 export interface LayerStoreActions {
@@ -39,6 +40,7 @@ export interface LayerStoreActions {
   updateViewport: (viewport: Viewport) => void;
 
   // Utility operations
+  setProjectName: (name: string) => void;
   setProjectId: (projectId: string) => void;
   getProjectLayerNodes: () => Node[];
   getProjectLayerEdges: () => Edge[];
@@ -48,7 +50,7 @@ export interface LayerStoreActions {
 
 export interface LayerStore extends LayerStoreState, LayerStoreActions {}
 
-const initialState: LayerStoreState = {
+const createInitialState = (projectName?: string): LayerStoreState => ({
   layers: [],
   layerNodeState: [
     {
@@ -56,7 +58,7 @@ const initialState: LayerStoreState = {
       type: "architectureNode",
       position: { x: 700, y: 100 },
       data: {
-        label: "Course Platform",
+        label: projectName || "Unitiled Project",
         type: "home",
       },
       deletable: false,
@@ -68,18 +70,30 @@ const initialState: LayerStoreState = {
   isLoading: false,
   error: null,
   projectId: null,
+  projectName: projectName || null,
   viewport: { x: 0, y: 0, zoom: 1 },
-};
+});
 
 // Create the Zustand store with types
 export const useLayerStore = create<LayerStore>()(
   devtools(
     persist(
       immer((set, get) => ({
-        ...initialState,
+        ...createInitialState(),
         setProjectId: (projectId) => {
           set((state) => {
             state.projectId = projectId;
+          });
+        },
+        setProjectName: (name) => {
+          set((state) => {
+            state.projectName = name;
+            const homeNode = state.layerNodeState.find(
+              (node) => node.id === "home"
+            );
+            if (homeNode) {
+              homeNode.data.label = name;
+            }
           });
         },
         getProjectLayerNodes: () => {

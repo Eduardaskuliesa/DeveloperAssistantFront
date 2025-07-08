@@ -90,8 +90,6 @@ const LayerNode = memo(({ id }: NodeProps) => {
             </div>
           </div>
         </div>
-
-        <Handle type="source" position={Position.Bottom} />
       </ContextMenuTrigger>
 
       <ContextMenuContent className="bg-theme-bg text-sm p-0 text-theme-xlgray border-neutral-600">

@@ -5,6 +5,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   Popover,
   PopoverContent,
@@ -13,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import CreateProjectButton from "./CreateProjectButton";
 import { ProgressLink } from "@/components/links/ProgressButton";
+import { useLayerStore } from "@/stores/useLayerStore";
 
 interface NavbarProps {
   projectId: string;
@@ -21,6 +23,15 @@ interface NavbarProps {
 const Navbar = ({ projectId }: NavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const pathname = usePathname();
+
+  const { getProjectLayerNodes } = useLayerStore();
+
+  const layers = getProjectLayerNodes().filter(
+    (layer) => layer.type !== "architectureNode"
+  );
+
+  const isOnBlueprintPage = pathname.includes("/blueprint");
 
   const { data: project, isPending } = useQuery(
     convexQuery(api.projects.getById, { id: projectId as Id<"projects"> })
@@ -38,6 +49,8 @@ const Navbar = ({ projectId }: NavbarProps) => {
     setIsOpen(false);
     setSearchTerm("");
   };
+
+  const isOnMainBlueprint = pathname === `/project/${projectId}/blueprint`;
 
   return (
     <div className="ml-38 pt-5 mx-4 pb-2 flex items-center gap-2">
@@ -74,7 +87,7 @@ const Navbar = ({ projectId }: NavbarProps) => {
               {filteredProjects?.map((proj) => (
                 <ProgressLink
                   key={proj._id}
-                  href={`/project/${proj._id}`}
+                  href={`/project/${proj._id}/blueprint`}
                   onClick={handleClosePopover}
                   className={`w-full overflow-visible text-left font-semibold px-3 cursor-pointer hover:scale-[1.02] py-2 rounded-md text-sm hover:bg-theme-gray transition-colors block ${
                     proj._id === projectId
@@ -85,12 +98,60 @@ const Navbar = ({ projectId }: NavbarProps) => {
                   {proj.name}
                 </ProgressLink>
               ))}
-              <div className="border-neutral-600 border-b"></div>
               <CreateProjectButton />
             </div>
           </div>
         </PopoverContent>
       </Popover>
+      {isOnBlueprintPage && (
+        <div className="flex border-l-2 gap-4 pl-4 border-neutral-500 h-full">
+          {layers.length !== 0 && (
+            <>
+              {isOnMainBlueprint ? (
+                <div className="text-neutral-300 gap-4 transition-colors cursor-default text-lg font-semibold flex items-center rounded-full px-4 h-10 w-fit border border-theme-pink">
+                  <h4 className="text-neutral-300">Blueprint</h4>
+                </div>
+              ) : (
+                <ProgressLink
+                  href={`/project/${projectId}/blueprint`}
+                  className="text-neutral-300 gap-4 hover:bg-theme-gray transition-colors cursor-pointer text-lg font-semibold flex items-center rounded-full px-4 h-10 w-fit border border-neutral-700"
+                >
+                  <h4 className="text-neutral-300">Blueprint</h4>
+                </ProgressLink>
+              )}
+            </>
+          )}
+
+          {layers.map((layer) => {
+            const isActiveLayer = pathname.includes(
+              `/project/${projectId}/blueprint/${layer.data.label}`
+            );
+
+            if (isActiveLayer) {
+              return (
+                <div
+                  key={layer.id}
+                  className="text-neutral-300 gap-4 transition-colors cursor-default text-lg font-semibold flex items-center rounded-full px-4 h-10 w-fit border border-theme-pink"
+                >
+                  <h4 className="text-neutral-300">
+                    {String(layer.data.label)}
+                  </h4>
+                </div>
+              );
+            }
+
+            return (
+              <ProgressLink
+                href={`/project/${projectId}/blueprint/${layer.data.label}`}
+                key={layer.id}
+                className="text-neutral-300 gap-4 hover:bg-theme-gray transition-colors cursor-pointer text-lg font-semibold flex items-center rounded-full px-4 h-10 w-fit border border-neutral-700"
+              >
+                <h4 className="text-neutral-300">{String(layer.data.label)}</h4>
+              </ProgressLink>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

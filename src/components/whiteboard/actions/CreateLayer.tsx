@@ -25,12 +25,12 @@ const layerOptions = [
 const CreateLayer = () => {
   const [open, setOpen] = useState(false);
 
-  const { createLayer } = useLayerStore();
+  const { createLayer, projectId } = useLayerStore();
 
   const handleCreateLayer = (layer: LayerOptions) => {
     const newLayer: CreateLayerPayload = {
       label: layer.label,
-      projectId: "jh70nsn9spa6ky2ny1jqeq76n97k7k5q",
+      projectId: projectId as string,
       teamId: "team_123",
       layerType: layer.type,
       position: {

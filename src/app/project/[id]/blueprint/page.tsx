@@ -28,11 +28,13 @@ const BlueprintPage = () => {
     architectureNode: HomeNode,
   };
   const {
-    layerEdgeState,
-    layerNodeState,
     updateLayerPosition,
     viewport,
     updateViewport,
+    getProjectLayerEdges,
+    layerEdgeState,
+    layerNodeState,
+    getProjectLayerNodes,
   } = useLayerStore();
 
   const initialEdges: Edge[] = [];
@@ -66,12 +68,22 @@ const BlueprintPage = () => {
   );
 
   useEffect(() => {
-    const newEdges = [...layerEdgeState];
-    const newNodes = [...layerNodeState];
+    const stateNodes = getProjectLayerNodes();
+    const stateEdges = getProjectLayerEdges();
+
+    const newNodes = [...stateNodes];
+    const newEdges = [...stateEdges];
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [layerEdgeState, layerNodeState, setNodes, setEdges]);
+  }, [
+    getProjectLayerNodes,
+    getProjectLayerEdges,
+    setNodes,
+    setEdges,
+    layerEdgeState,
+    layerNodeState,
+  ]);
 
   const onConnect: OnConnect = useCallback(
     (params) =>

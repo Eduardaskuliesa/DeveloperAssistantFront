@@ -20,6 +20,7 @@ export interface LayerStoreState {
   isLoading: boolean;
   error: string | null;
   viewport: Viewport;
+  projectId: string | null;
 }
 
 export interface LayerStoreActions {
@@ -38,6 +39,9 @@ export interface LayerStoreActions {
   updateViewport: (viewport: Viewport) => void;
 
   // Utility operations
+  setProjectId: (projectId: string) => void;
+  getProjectLayerNodes: () => Node[];
+  getProjectLayerEdges: () => Edge[];
   getLayerById: (id: string) => Layer | undefined;
   getLayersByType: (layerType: LayerType) => Layer[];
 }
@@ -63,6 +67,7 @@ const initialState: LayerStoreState = {
   selectedLayerId: null,
   isLoading: false,
   error: null,
+  projectId: null,
   viewport: { x: 0, y: 0, zoom: 1 },
 };
 
@@ -72,6 +77,42 @@ export const useLayerStore = create<LayerStore>()(
     persist(
       immer((set, get) => ({
         ...initialState,
+        setProjectId: (projectId) => {
+          set((state) => {
+            state.projectId = projectId;
+          });
+        },
+        getProjectLayerNodes: () => {
+          const { layerNodeState, layers, projectId } = get();
+
+          if (!projectId) return [layerNodeState[0]];
+
+          const projectLayerIds = layers
+            .filter((layer) => layer.projectId === projectId)
+            .map((layer) => layer.id);
+
+          return layerNodeState.filter(
+            (node) => node.id === "home" || projectLayerIds.includes(node.id)
+          );
+        },
+
+        getProjectLayerEdges: () => {
+          const { layerEdgeState, layers, projectId } = get();
+
+          if (!projectId) return [];
+
+          const projectLayerIds = layers
+            .filter((layer) => layer.projectId === projectId)
+            .map((layer) => layer.id);
+
+          return layerEdgeState.filter(
+            (edge) =>
+              (edge.source === "home" &&
+                projectLayerIds.includes(edge.target)) ||
+              (projectLayerIds.includes(edge.source) &&
+                projectLayerIds.includes(edge.target))
+          );
+        },
 
         createLayer: (payload: CreateLayerPayload) => {
           set((state) => {

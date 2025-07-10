@@ -17,10 +17,10 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-import CustomControls from "@/components/whiteboard/controlls/RoomControlls";
 import HomeNode from "@/components/whiteboard/nodes/HomeNodes";
 import LayerNode from "@/components/whiteboard/nodes/LayerNode";
 import { useLayerStore } from "@/stores/useLayerStore";
+import RoomControlls from "@/components/whiteboard/controlls/RoomControlls";
 
 const BlueprintPage = () => {
   const nodeTypes = {
@@ -106,7 +106,7 @@ const BlueprintPage = () => {
 
   return (
     <div className="h-[90vh] w-full relative rounded-xl bg-theme-gray">
-      <CustomControls />
+      <RoomControlls />
       <style
         dangerouslySetInnerHTML={{
           __html: `

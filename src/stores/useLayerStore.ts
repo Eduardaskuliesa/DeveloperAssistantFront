@@ -22,6 +22,7 @@ export interface LayerStoreState {
   viewport: Viewport;
   projectId: string | null;
   projectName: string | null;
+  homeNodePositions: Record<string, Position>;
 }
 
 export interface LayerStoreActions {
@@ -50,7 +51,10 @@ export interface LayerStoreActions {
 
 export interface LayerStore extends LayerStoreState, LayerStoreActions {}
 
-const createInitialState = (projectName?: string): LayerStoreState => ({
+const createInitialState = (
+  projectName?: string,
+  projectId?: string
+): LayerStoreState => ({
   layers: [],
   layerNodeState: [
     {
@@ -66,10 +70,11 @@ const createInitialState = (projectName?: string): LayerStoreState => ({
     },
   ],
   layerEdgeState: [],
+  homeNodePositions: {},
   selectedLayerId: null,
   isLoading: false,
   error: null,
-  projectId: null,
+  projectId: projectId || null,
   projectName: projectName || null,
   viewport: { x: 0, y: 0, zoom: 1 },
 });
@@ -97,7 +102,8 @@ export const useLayerStore = create<LayerStore>()(
           });
         },
         getProjectLayerNodes: () => {
-          const { layerNodeState, layers, projectId } = get();
+          const { layerNodeState, layers, projectId, homeNodePositions } =
+            get();
 
           if (!projectId) return [layerNodeState[0]];
 
@@ -105,9 +111,21 @@ export const useLayerStore = create<LayerStore>()(
             .filter((layer) => layer.projectId === projectId)
             .map((layer) => layer.id);
 
-          return layerNodeState.filter(
-            (node) => node.id === "home" || projectLayerIds.includes(node.id)
+          const homeNodePosition = homeNodePositions[projectId] || {
+            x: 700,
+            y: 100,
+          };
+
+          const homeNode = {
+            ...layerNodeState[0],
+            position: homeNodePosition,
+          };
+
+          const projectNodes = layerNodeState.filter((node) =>
+            projectLayerIds.includes(node.id)
           );
+
+          return [homeNode, ...projectNodes];
         },
 
         getProjectLayerEdges: () => {
@@ -145,12 +163,10 @@ export const useLayerStore = create<LayerStore>()(
               borderColor: payload.borderColor || "#6b7280",
             };
 
-            // Add to layers array
             state.layers.push(newLayer);
             state.selectedLayerId = newLayer.id;
             state.error = null;
 
-            // Add to React Flow states
             state.layerNodeState.push({
               id: newLayer.id,
               type: "layerNode",
@@ -180,6 +196,11 @@ export const useLayerStore = create<LayerStore>()(
 
         updateLayerPosition: (id: string, position: Position) => {
           set((state) => {
+            if (id === "home" && state.projectId) {
+              state.homeNodePositions[state.projectId] = position;
+              return;
+            }
+
             const layer = state.layers.find((layer: Layer) => layer.id === id);
             if (layer) {
               layer.position = position;
@@ -205,7 +226,6 @@ export const useLayerStore = create<LayerStore>()(
               layer.updatedAt = new Date();
             }
 
-            // Update label in React Flow node data
             const node = state.layerNodeState.find(
               (node: Node) => node.id === id
             );
@@ -237,7 +257,6 @@ export const useLayerStore = create<LayerStore>()(
 
         addCabinet: (payload: CreateCabinetPayload) => {
           set((state) => {
-            // Add cabinet to layers array
             const layer = state.layers.find(
               (layer: Layer) => layer.id === payload.layerId
             );
@@ -252,7 +271,6 @@ export const useLayerStore = create<LayerStore>()(
               };
               layer.cabinets.push(newCabinet);
 
-              // Update React Flow node data
               const node = state.layerNodeState.find(
                 (node: Node) => node.id === payload.layerId
               );
@@ -279,7 +297,6 @@ export const useLayerStore = create<LayerStore>()(
           });
         },
 
-        // Utility operations
         getLayerById: (id: string) => {
           return get().layers.find((layer) => layer.id === id);
         },
@@ -303,6 +320,7 @@ export const useLayerStore = create<LayerStore>()(
           layerEdgeState: state.layerEdgeState,
           selectedLayerId: state.selectedLayerId,
           viewport: state.viewport,
+          homeNodePositions: state.homeNodePositions,
         }),
       }
     ),

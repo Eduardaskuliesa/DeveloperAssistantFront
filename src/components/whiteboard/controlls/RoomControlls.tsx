@@ -1,6 +1,6 @@
 import CreateLayer from "../actions/CreateLayer";
 
-const CustomControls = () => {
+const RoomControlls = () => {
   return (
     <div className="absolute top-5 left-5 flex gap-2 z-10">
       <CreateLayer />
@@ -14,4 +14,4 @@ const CustomControls = () => {
   );
 };
 
-export default CustomControls;
+export default RoomControlls;

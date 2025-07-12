@@ -8,6 +8,8 @@ export interface DatabaseRow {
   id: string;
   title: string;
   type: string;
+  hasLeftHandle?: boolean;
+  hasRightHandle?: boolean;
 }
 
 export interface DatabaseTable {
@@ -40,6 +42,7 @@ export interface DatabaseStoreActions {
   ) => void;
   addTableEdge: (edge: Edge) => void;
   updateTableEdges: (edges: Edge[]) => void;
+  removeTableEdge: (edgeId: string) => void;
 
   // Row operations
   createRow: (tableId: string, title: string, type?: string) => void;
@@ -50,6 +53,8 @@ export interface DatabaseStoreActions {
     type: string
   ) => void;
   deleteRow: (tableId: string, rowId: string) => void;
+  addRowHandle: (tableId: string, rowId: string, side: 'left' | 'right') => void;
+  removeRowHandle: (tableId: string, rowId: string, side: 'left' | 'right') => void;
 
   // Viewport operations
   updateViewport: (viewport: Viewport) => void;
@@ -124,13 +129,73 @@ export const useDatabaseStore = create<DatabaseStore>()(
 
         addTableEdge: (edge: Edge) => {
           set((state) => {
-            state.tableEdgeState.push(edge);
+            const existingEdgeIndex = state.tableEdgeState.findIndex(e => e.id === edge.id);
+            
+            if (existingEdgeIndex === -1) {
+              state.tableEdgeState.push(edge);
+            } else {
+              state.tableEdgeState[existingEdgeIndex] = edge;
+            }
           });
         },
 
         updateTableEdges: (edges: Edge[]) => {
           set((state) => {
             state.tableEdgeState = edges;
+          });
+        },
+
+        removeTableEdge: (edgeId) => {
+          set((state) => {
+            state.tableEdgeState = state.tableEdgeState.filter(
+              (edge) => edge.id !== edgeId
+            );
+          });
+        },
+
+        addRowHandle: (tableId, rowId, side) => {
+          set((state) => {
+            const table = state.tables.find((t) => t.id === tableId);
+            if (table) {
+              const row = table.schema.find((r) => r.id === rowId);
+              if (row) {
+                if (side === 'left') {
+                  row.hasLeftHandle = true;
+                } else {
+                  row.hasRightHandle = true;
+                }
+                table.updatedAt = new Date();
+
+                // Update React Flow node data
+                const node = state.tableNodeState.find((node) => node.id === tableId);
+                if (node && node.data) {
+                  node.data.schema = [...table.schema];
+                }
+              }
+            }
+          });
+        },
+
+        removeRowHandle: (tableId, rowId, side) => {
+          set((state) => {
+            const table = state.tables.find((t) => t.id === tableId);
+            if (table) {
+              const row = table.schema.find((r) => r.id === rowId);
+              if (row) {
+                if (side === 'left') {
+                  row.hasLeftHandle = false;
+                } else {
+                  row.hasRightHandle = false;
+                }
+                table.updatedAt = new Date();
+
+                // Update React Flow node data
+                const node = state.tableNodeState.find((node) => node.id === tableId);
+                if (node && node.data) {
+                  node.data.schema = [...table.schema];
+                }
+              }
+            }
           });
         },
 

@@ -106,7 +106,7 @@ export const DatabaseTableHeader = ({
       ) : (
         <ContextMenu>
           <ContextMenuTrigger asChild>
-            <div className="border-b font-medium border-neutral-600 text-neutral-300 rounded-tl-lg rounded-tr-lg p-2 text-center text-sm cursor-pointer">
+            <div className="border-b font-medium border-neutral-600 text-neutral-300 rounded-tl-lg rounded-tr-lg p-2 text-center text-sm">
               {label}
             </div>
           </ContextMenuTrigger>
@@ -128,7 +128,7 @@ export const DatabaseTableHeader = ({
       )}
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="bg-theme-bg border-neutral-600">
+        <AlertDialogContent className="bg-theme-gray border-none">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-neutral-300">
               Delete Table

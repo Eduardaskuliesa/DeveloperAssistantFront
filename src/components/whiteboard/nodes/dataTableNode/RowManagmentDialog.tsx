@@ -38,7 +38,7 @@ interface RowManagementDialogProps {
 const commonTypes = [
   "uuid",
   "string",
-  "text",
+  "number",
   "boolean",
   "timestamp",
   "json",
@@ -85,13 +85,11 @@ const RowManagementDialog = ({
   };
 
   const handleSave = () => {
-    // Process new rows
     const newRows = rows.filter((row) => row.isNew && row.title.trim());
     newRows.forEach((row) => {
       createRow(tableId, row.title.trim(), row.type);
     });
 
-    // Process updated existing rows
     const updatedRows = rows.filter((row) => !row.isNew);
     updatedRows.forEach((row) => {
       const original = existingRows.find((r) => r.id === row.id);
@@ -103,7 +101,6 @@ const RowManagementDialog = ({
       }
     });
 
-    // Process deleted rows
     const currentIds = rows.map((row) => row.id);
     const deletedRows = existingRows.filter(
       (row) => !currentIds.includes(row.id)
@@ -121,7 +118,7 @@ const RowManagementDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-theme-bg border-neutral-600 max-w-2xl p-0 px-2 py-3">
+      <DialogContent className="bg-theme-bg border-none max-w-2xl p-0 px-2 py-3">
         <DialogHeader>
           <DialogTitle className="text-neutral-300  px-2">
             Manage Rows - {tableName}
@@ -133,7 +130,7 @@ const RowManagementDialog = ({
           {rows.map((row) => (
             <div
               key={row.id}
-              className="flex items-center p-1  bg-theme-gray rounded-lg border border-neutral-600"
+              className="flex items-center p-1  bg-theme-gray rounded-lg"
             >
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-3">
@@ -163,12 +160,12 @@ const RowManagementDialog = ({
                       <SelectTrigger className="bg-theme-bg border-neutral-600 text-neutral-300 focus:border-theme-pink">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-theme-bg border-neutral-600">
+                      <SelectContent className="bg-theme-bg  border-neutral-600">
                         {commonTypes.map((type) => (
                           <SelectItem
                             key={type}
                             value={type}
-                            className="text-neutral-300 hover:bg-theme-lgray"
+                            className="text-neutral-300 "
                           >
                             {type}
                           </SelectItem>

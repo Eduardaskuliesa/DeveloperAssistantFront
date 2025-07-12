@@ -20,10 +20,17 @@ import "@xyflow/react/dist/style.css";
 import { useDatabaseStore } from "@/stores/useDatabaseStore";
 import DataTableNode from "@/components/whiteboard/nodes/dataTableNode/DataTableNode";
 import LayerControlls from "@/components/whiteboard/controlls/LayerControlls";
+import DissconnectTableEdge from "@/components/whiteboard/edges/DissconetTableEdge";
+import RowConnectionEdge from "@/components/whiteboard/edges/RowConnectionEdge";
 
 const LayerPage = () => {
   const nodeTypes = {
     dataTableNode: DataTableNode,
+  };
+
+  const edgeTypes = {
+    tableEdge: DissconnectTableEdge,
+    rowConnectionEdge: RowConnectionEdge,
   };
 
   const {
@@ -88,15 +95,24 @@ const LayerPage = () => {
 
   const onConnect: OnConnect = useCallback(
     (params) => {
+      const isRowConnection =
+        params.sourceHandle &&
+        params.targetHandle &&
+        params.sourceHandle.includes("-source") &&
+        params.targetHandle.includes("-target");
+
       const newEdge = {
         ...params,
-        id: `edge-${params.source}-${params.target}`,
+        id: `edge-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          color: "#737373",
+          color: isRowConnection ? "#ec4899" : "#737373",
         },
-        style: { stroke: "#737373", strokeWidth: 2 },
-        type: "bezier",
+        style: {
+          stroke: isRowConnection ? "#ec4899" : "#737373",
+          strokeWidth: 2,
+        },
+        type: isRowConnection ? "rowConnectionEdge" : "tableEdge",
       } as Edge;
 
       setEdges((eds) => addEdge(newEdge, eds));
@@ -151,6 +167,7 @@ const LayerPage = () => {
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        edgeTypes={edgeTypes}
         nodeTypes={nodeTypes}
         onNodesChange={handleNodesChange}
         onEdgesChange={handleEdgesChange}

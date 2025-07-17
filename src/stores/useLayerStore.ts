@@ -33,7 +33,7 @@ export interface LayerStoreActions {
   deleteLayer: (id: string) => void;
 
   // Cabinet operations
-  addCabinet: (payload: CreateCabinetPayload) => void;
+  addCabinet: (payload: CreateCabinetPayload) => string;
   updateCabinet: (payload: UpdateCabinetPayload) => void;
   deleteCabinet: (layerId: string, cabinetId: string) => void;
 
@@ -148,6 +148,14 @@ export const useLayerStore = create<LayerStore>()(
 
         createLayer: (payload: CreateLayerPayload) => {
           set((state) => {
+            const defaultCabinet = {
+              id: `cabinet-default-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              name: "Default",
+              description: "Default cabinet",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+
             const newLayer: Layer = {
               id: `layer-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               projectId: payload.projectId,
@@ -155,7 +163,7 @@ export const useLayerStore = create<LayerStore>()(
               label: payload.label,
               layerType: payload.layerType,
               position: payload.position,
-              cabinets: [],
+              cabinets: [defaultCabinet],
               createdAt: new Date(),
               updatedAt: new Date(),
               isVisible: true,
@@ -255,15 +263,19 @@ export const useLayerStore = create<LayerStore>()(
           });
         },
 
-        addCabinet: (payload: CreateCabinetPayload) => {
+        addCabinet: (payload: CreateCabinetPayload): string => {
+          let newCabinetId = "";
+
           set((state) => {
             const layer = state.layers.find(
               (layer: Layer) => layer.id === payload.layerId
             );
 
             if (layer) {
+              newCabinetId = `cabinet-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
               const newCabinet = {
-                id: `cabinet-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                id: newCabinetId,
                 name: payload.name,
                 description: payload.description || "",
                 createdAt: new Date(),
@@ -279,16 +291,61 @@ export const useLayerStore = create<LayerStore>()(
               }
             }
           });
+          return newCabinetId;
         },
 
         updateCabinet: (payload: UpdateCabinetPayload) => {
-          // Implementation will be added later
-          console.log("updateCabinet", payload);
+          set((state) => {
+            const layer = state.layers.find(
+              (layer: Layer) => layer.id === payload.layerId
+            );
+
+            if (layer) {
+              const cabinet = layer.cabinets.find(
+                (cabinet) => cabinet.id === payload.cabinetId
+              );
+
+              if (cabinet) {
+                if (payload.name !== undefined) cabinet.name = payload.name;
+                if (payload.description !== undefined)
+                  cabinet.description = payload.description;
+                cabinet.updatedAt = new Date();
+                layer.updatedAt = new Date();
+
+                const node = state.layerNodeState.find(
+                  (node: Node) => node.id === payload.layerId
+                );
+                if (node && node.data) {
+                  (node as Node).data.cabinets = [...layer.cabinets];
+                }
+              }
+            }
+          });
         },
 
         deleteCabinet: (layerId: string, cabinetId: string) => {
-          // Implementation will be added later
-          console.log("deleteCabinet", layerId, cabinetId);
+          set((state) => {
+            const layer = state.layers.find(
+              (layer: Layer) => layer.id === layerId
+            );
+
+            if (layer) {
+              if (layer.cabinets.length <= 1) {
+                return;
+              }
+              layer.cabinets = layer.cabinets.filter(
+                (cabinet) => cabinet.id !== cabinetId
+              );
+              layer.updatedAt = new Date();
+
+              const node = state.layerNodeState.find(
+                (node: Node) => node.id === layerId
+              );
+              if (node && node.data) {
+                (node as Node).data.cabinets = [...layer.cabinets];
+              }
+            }
+          });
         },
 
         updateViewport: (viewport: Viewport) => {
